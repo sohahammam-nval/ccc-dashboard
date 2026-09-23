@@ -1,0 +1,13 @@
+# never commit credentials — the dashboard repo is public
+googleway-key.R
+*.Renviron
+.Renviron
+
+# the raw CCC files live in OneDrive / on Dataverse, not here
+*.xlsx
+ccc-phase3.csv
+ccc-phase3-public.csv
+
+.Rhistory
+.RData
+.DS_Store
