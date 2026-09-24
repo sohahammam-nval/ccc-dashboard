@@ -426,6 +426,10 @@ const cv=document.getElementById('mapCanvas'),ctx=cv.getContext('2d');
 const popEl=document.getElementById('pop');
 let W=0,H=0,dpr=window.devicePixelRatio||1;
 let projection=null,pathGen=null,statesFC=null;
+let PLACES=[],ROADS=[];      // background reference layer
+let placesProj=[],roadsProj=[],stateLabelsProj=[];   // projected once per resize, cheap to reuse every frame
+const RANK_MIN_K={0:1,1:1.4,2:1.8,3:2.5,4:3.5,6:5,7:8,8:13};  // zoom a city's label appears at
+const ROADS_MIN_K=1.3;       // roads/labels stay off at the national overview
 let transform=d3.zoomIdentity, visible=[], drawn=[];
 
 // d3.geoAlbersUsa() covers only the 50 states + DC and returns null for
@@ -480,6 +484,26 @@ function sizeCanvas(){
     r.inset = ins || null;
   }
   projectAll();
+
+  // Reference layer: project once here (cheap, runs only on resize), then
+  // every draw() frame just re-applies the current pan/zoom transform to
+  // these cached points instead of re-running d3's projection per frame.
+  placesProj = PLACES.map(p=>({name:p[0],rank:p[3],pt:projection([p[2],p[1]])}))
+                      .filter(p=>p.pt);
+  roadsProj = ROADS.map(r=>({pts:r.p.map(([lat,lon])=>projection([lon,lat])).filter(Boolean)}))
+                    .filter(r=>r.pts.length>=2);
+
+  // State names, from the same boundary file already used for the map fill —
+  // no extra data needed. geoCentroid can land outside a concave state (e.g.
+  // Florida's panhandle pulls its centroid oddly), so a couple of names are
+  // manually nudged toward where a reader actually expects to see them.
+  const NUDGE={'Florida':[0,-1.1],'Louisiana':[0.6,0],'Michigan':[-1.2,0.3]};
+  stateLabelsProj = mainFC.features.map(f=>{  // the LOCAL object computed just above, not the cached helper
+    let c=d3.geoCentroid(f);
+    const nx=NUDGE[f.properties.name];
+    if(nx) c=[c[0]+nx[0], c[1]+nx[1]];
+    return {name:f.properties.name, pt:projection(c)};
+  }).filter(s=>s.pt);
 }
 
 // Panels are laid out left-to-right and only for territories that actually have
@@ -519,6 +543,93 @@ function mainFC(){
     features:statesFC.features.filter(f=>!INSETS.some(i=>i.names.includes(f.properties.name)))};
   return _mainFC;
 }
+// Roads and city labels: a quiet grey backdrop, never competing with the
+// event data drawn on top of it. Off at the national overview (ROADS_MIN_K)
+// so the busiest, most zoomed-out view stays uncluttered and cheap to
+// redraw; city labels fade in individually by importance as you zoom
+// further, the same way a printed atlas adds smaller towns at larger scales.
+// Draws each letter separately with a gap between them — canvas has no
+// letter-spacing property, so this is the standard way to get the wide,
+// tracked-out look atlases use for place names.
+function fillTextSpaced(text,cx,cy,spacing){
+  ctx.textAlign='left';
+  const widths=[...text].map(ch=>ctx.measureText(ch).width);
+  const total=widths.reduce((a,b)=>a+b,0)+spacing*(text.length-1);
+  let x=cx-total/2;
+  for(let i=0;i<text.length;i++){ ctx.fillText(text[i],x,cy); x+=widths[i]+spacing; }
+}
+
+function drawReferenceLayer(){
+  // State names read at any zoom — unlike roads, they're cheap (56 labels,
+  // not thousands of line segments) and a labelled map reads as "finished"
+  // even at the very first view, the way the CARTO reference does.
+  ctx.save();
+  ctx.font="500 12px 'Public Sans',sans-serif";
+  ctx.textBaseline='middle';
+  const stateFade=1-Math.min(Math.max(transform.k-4,0)/4,1);  // recede once you're viewing part of one state
+  for(const st of stateLabelsProj){
+    const x=transform.applyX(st.pt[0]), y=transform.applyY(st.pt[1]);
+    if(x<-60||x>W+60||y<-20||y>H+20) continue;
+    ctx.globalAlpha=0.5*stateFade;
+    ctx.fillStyle='#B9B2A0';
+    fillTextSpaced(st.name.toUpperCase(),x,y,1.4);
+  }
+  ctx.restore();
+
+  if(transform.k<ROADS_MIN_K) return;
+  const fade=Math.min((transform.k-ROADS_MIN_K)/1.2,1);  // ease in rather than pop on
+
+  ctx.save();
+  ctx.strokeStyle='#E4DFD0';  // lighter than the state-boundary grey (#D8D3C7), stays
+  ctx.lineWidth=1;             // distinguishable from it even after alpha blending
+  ctx.globalAlpha=0.65*fade;
+  ctx.lineJoin='round';ctx.lineCap='round';
+  for(const road of roadsProj){
+    const p0=road.pts[0];
+    const sx0=transform.applyX(p0[0]), sy0=transform.applyY(p0[1]);
+    let onScreen = sx0>=-40&&sx0<=W+40&&sy0>=-40&&sy0<=H+40;
+    if(!onScreen){
+      for(let i=1;i<road.pts.length && !onScreen;i++){
+        const sx=transform.applyX(road.pts[i][0]), sy=transform.applyY(road.pts[i][1]);
+        if(sx>=-40&&sx<=W+40&&sy>=-40&&sy<=H+40) onScreen=true;
+      }
+      if(!onScreen) continue;
+    }
+    ctx.beginPath();
+    ctx.moveTo(transform.applyX(p0[0]),transform.applyY(p0[1]));
+    for(let i=1;i<road.pts.length;i++)
+      ctx.lineTo(transform.applyX(road.pts[i][0]),transform.applyY(road.pts[i][1]));
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Bigger cities read in a larger, bolder face; small towns stay quiet.
+  // This is the single biggest thing a real atlas does that a flat font
+  // size doesn't: it lets you tell New York from a county seat at a glance.
+  const CITY_STYLE={
+    0:{size:13,weight:600,dot:2.1}, 1:{size:12,weight:600,dot:1.9},
+    2:{size:11.5,weight:500,dot:1.7}, 3:{size:11,weight:500,dot:1.5},
+    4:{size:10.5,weight:500,dot:1.4}, 6:{size:10,weight:400,dot:1.2},
+    7:{size:9.5,weight:400,dot:1.1}, 8:{size:9,weight:400,dot:1}
+  };
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  for(const p of placesProj){
+    const minK=RANK_MIN_K[p.rank]!=null?RANK_MIN_K[p.rank]:99;
+    if(transform.k<minK) continue;
+    const x=transform.applyX(p.pt[0]), y=transform.applyY(p.pt[1]);
+    if(x<-20||x>W+20||y<-20||y>H+20) continue;
+    const localFade=Math.min((transform.k-minK)/0.6,1);
+    const st=CITY_STYLE[p.rank]||CITY_STYLE[8];
+    ctx.save();
+    ctx.globalAlpha=0.85*localFade;
+    ctx.font=st.weight+" "+st.size+"px 'Public Sans',sans-serif";
+    ctx.fillStyle='#9BA3AC';
+    ctx.beginPath();ctx.arc(x,y,st.dot,0,6.2832);ctx.fill();
+    ctx.fillText(p.name,x+st.dot+2.5,y);
+    ctx.restore();
+  }
+  ctx.restore();
+}
 function draw(){
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='#EDEAE2';ctx.fillRect(0,0,W,H);
@@ -527,8 +638,18 @@ function draw(){
   ctx.translate(transform.x,transform.y);ctx.scale(transform.k,transform.k);
   ctx.beginPath();pathGen(mainFC());
   ctx.fillStyle='#F7F5EF';ctx.fill();
-  ctx.lineWidth=0.6/transform.k;ctx.strokeStyle='#D8D3C7';ctx.stroke();
+  // Dashed and warm-toned, not just a lighter grey — so a state line reads as
+  // "boundary" even where it runs parallel to a road, without relying on the
+  // reader distinguishing two similar shades of grey. Kept distinctly duller
+  // than the right-wing valence red used on event points, so the two never
+  // get confused with each other.
+  ctx.lineWidth=0.7/transform.k;
+  ctx.strokeStyle='#C9A79A';
+  ctx.setLineDash([4/transform.k, 3/transform.k]);
+  ctx.stroke();
   ctx.restore();
+
+  drawReferenceLayer();
 
   // territory insets: fixed panels, not affected by pan/zoom
   for(const ins of shownInsets){
@@ -569,7 +690,7 @@ function draw(){
   ctx.textAlign='center';ctx.textBaseline='middle';
   for(const [key,g] of bins){
     const isInset=key.charCodeAt(0)===84;      // 'T'
-    if(g.length>=4 || (isInset && g.length>=1)){
+    if(g.length>=4 || (isInset && g.length>=2)){  // a lone territory event is just a point, not a cluster
       let sx=0,sy=0,mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;
       for(const p of g){sx+=p.x;sy+=p.y;
         if(p.x<mnx)mnx=p.x; if(p.x>mxx)mxx=p.x;
@@ -940,11 +1061,15 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){mb.classList.remove('open');
 async function boot(){
   const el=document.getElementById('loading');
   try{
-    const [geo,data]=await Promise.all([
+    // roads/places are a background reference layer, not core data —
+    // if either fails to load the map still works fine without them
+    const [geo,data,places,roads]=await Promise.all([
       fetch('data/us-states.json').then(r=>{if(!r.ok)throw new Error('us-states.json '+r.status);return r.json();}),
-      fetch('data/ccc-dashboard.json').then(r=>{if(!r.ok)throw new Error('ccc-dashboard.json '+r.status);return r.json();})
+      fetch('data/ccc-dashboard.json').then(r=>{if(!r.ok)throw new Error('ccc-dashboard.json '+r.status);return r.json();}),
+      fetch('data/us-places.json').then(r=>r.ok?r.json():[]).catch(()=>[]),
+      fetch('data/us-roads.json').then(r=>r.ok?r.json():[]).catch(()=>[])
     ]);
-    US_STATES=geo; DATA=data;
+    US_STATES=geo; DATA=data; PLACES=places; ROADS=roads;
     statesFC=US_STATES; _mainFC=null;
     initData();
     resolveInsetMembers();
