@@ -13,7 +13,7 @@
   *{box-sizing:border-box;}
   html,body{margin:0;height:100%;overflow:hidden;background:var(--paper);color:var(--ink);
     font-family:'Public Sans',sans-serif;font-size:14px;}
-  .app{display:grid;grid-template-columns:282px 1fr;height:100vh;}
+  .app{display:grid;grid-template-columns:282px 1fr;height:100vh;height:calc(var(--vh,1vh)*100);}
   .side{background:var(--card);border-right:1px solid var(--line);overflow-y:auto;}
   .brand{padding:15px 18px 13px;border-bottom:1px solid var(--line);}
   .brand h1{font-family:'Newsreader',serif;font-size:17px;font-weight:600;margin:0;}
@@ -100,13 +100,19 @@
   .zoomctl button{width:27px;height:27px;background:var(--card);border:none;cursor:pointer;
     font-size:15px;color:var(--ink);line-height:1;}
   .zoomctl button:hover{background:#fff;}
+  .legendToggle{position:absolute;top:11px;right:11px;z-index:6;background:var(--card);
+    border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--soft);}
+  .legendToggle:hover{border-color:var(--soft);color:var(--ink);}
   .legend{position:absolute;top:11px;right:11px;background:var(--card);border:1px solid var(--line);
-    border-radius:4px;padding:9px 11px;z-index:5;}
+    border-radius:4px;padding:9px 11px;z-index:5;display:none;max-width:190px;}
+  .legend.open{display:block;}
   .lt{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--soft);
     letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;}
   .lr{display:flex;align-items:center;gap:7px;margin:2.5px 0;
     font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--soft);}
-  .ld{border-radius:50%;background:var(--gold);opacity:.6;flex-shrink:0;}
+  .ld{border-radius:50%;background:transparent;border:1.3px solid var(--soft);flex-shrink:0;}
   .lsep{height:1px;background:var(--line);margin:7px 0;}
   .lv{width:9px;height:9px;border-radius:50%;}
   .hint{position:absolute;bottom:13px;left:13px;font-family:'IBM Plex Mono',monospace;
@@ -172,11 +178,11 @@
     max-width:620px;width:100%;max-height:84vh;overflow-y:auto;padding:28px 30px;
     box-shadow:0 8px 40px rgba(30,42,51,.28);}
   .modal h2{font-family:'Newsreader',serif;font-size:21px;font-weight:600;margin:0 0 4px;}
-  .modal .sub{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--soft);
-    letter-spacing:.07em;text-transform:uppercase;margin-bottom:18px;}
+  .modal .sub{font-family:'Newsreader',serif;font-style:italic;font-size:14px;
+    color:var(--soft);margin-bottom:18px;}
   .modal p{font-size:14px;line-height:1.65;margin:0 0 14px;color:var(--ink);}
-  .modal h3{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--soft);margin:20px 0 8px;}
+  .modal h3{font-family:'Newsreader',serif;font-style:italic;font-weight:500;font-size:16px;
+    color:var(--ink);margin:22px 0 8px;}
   .modal ul{margin:0 0 14px;padding-left:18px;font-size:13.5px;line-height:1.6;}
   .modal li{margin-bottom:5px;}
   .modalClose{float:right;background:transparent;border:1px solid var(--line);
@@ -186,6 +192,41 @@
   #loading{position:fixed;inset:0;background:var(--paper);z-index:99;display:flex;
     align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;
     font-size:11px;color:var(--soft);letter-spacing:.08em;text-transform:uppercase;}
+  /* ---------- mobile layout ---------- */
+  .filterToggle{display:none;position:fixed;bottom:18px;left:18px;z-index:20;
+    background:var(--gold);color:#fff;border:none;border-radius:24px;
+    padding:11px 18px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    letter-spacing:.06em;text-transform:uppercase;box-shadow:0 3px 14px rgba(30,42,51,.35);
+    cursor:pointer;}
+  .sideClose{display:none;}
+  .sideBackdrop{display:none;position:fixed;inset:0;background:rgba(30,42,51,.45);z-index:35;}
+  .sideBackdrop.open{display:block;}
+
+  @media (max-width:760px){
+    html,body{height:auto;min-height:100%;overflow-y:auto;overflow-x:hidden;}
+    .app{grid-template-columns:1fr;height:auto;min-height:100vh;}
+    .side{position:fixed;top:0;left:0;bottom:0;width:86%;max-width:320px;z-index:40;
+      transform:translateX(-101%);transition:transform .22s ease;
+      box-shadow:2px 0 20px rgba(30,42,51,.28);}
+    .side.open{transform:translateX(0);}
+    .sideClose{display:block;position:absolute;top:14px;right:14px;background:transparent;
+      border:1px solid var(--line);border-radius:3px;width:26px;height:26px;
+      font-size:14px;color:var(--soft);cursor:pointer;}
+    .brand{position:relative;}
+    .filterToggle{display:block;}
+    .main{overflow:visible;}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .body{grid-template-columns:1fr;overflow:visible;}
+    .mapbox{height:calc(var(--vh,1vh)*64);min-height:360px;}
+    .rail{border-left:none;border-top:1px solid var(--line);overflow-y:visible;
+      max-height:none;padding-bottom:70px;}   /* clears the floating toggle */
+  }
+
+  .chartTip{position:fixed;z-index:60;background:var(--card);border:1px solid var(--line);
+    border-radius:4px;padding:8px 10px;font-size:11px;pointer-events:none;display:none;
+    box-shadow:0 3px 14px rgba(30,42,51,.18);}
+  .chartTip .t{font-weight:600;}
+  .chartTip .m{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--soft);margin-top:2px;}
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
 </style>
@@ -194,7 +235,7 @@
 <div id="loading">Loading events…</div>
 <div class="app">
   <aside class="side">
-    <div class="brand"><h1>US Protest Events</h1><div class="s">Crowd Counting Consortium</div>
+    <div class="brand"><button class="sideClose" id="sideClose">&times;</button><h1>US Protest Events</h1><div class="s">Crowd Counting Consortium</div>
       <div class="s" id="brandSub">—</div>
       <button class="aboutBtn" id="aboutBtn">About this dashboard</button></div>
     <div class="g">
@@ -219,19 +260,30 @@
       <div class="note" id="provenance"></div>
     </div>
   </aside>
+  <div class="sideBackdrop" id="sideBackdrop"></div>
+  <button class="filterToggle" id="filterToggle">Filters</button>
   <div class="main">
     <div class="stats">
       <div class="stat ev"><div class="n" id="sEv">0</div><div class="l">Events</div></div>
-      <div class="stat pa"><div class="n" id="sPa">0</div><div class="l">Participants where known</div></div>
-      <div class="stat md"><div class="n" id="sMd">0</div><div class="l">Events with size estimate</div></div>
+      <div class="stat pa" title="Sum of crowd-size estimates for events where one was recorded. See the tile at right for what share of the current selection that covers."><div class="n" id="sPa">0</div><div class="l">Recorded participants</div></div>
+      <div class="stat md" title="Share of the currently filtered events that have a crowd-size estimate. When this is low, treat the participant total as a floor, not a measure."><div class="n" id="sMd">0</div><div class="l">Events with size estimate</div></div>
       <div class="stat st"><div class="n" id="sSt">0</div><div class="l">States &amp; territories</div></div>
     </div>
     <div class="body">
       <div class="mapbox">
         <canvas id="mapCanvas"></canvas>
         <div class="pop" id="pop"></div>
-        <div class="legend">
-          <div class="lt">Crowd size</div>
+        <button class="legendToggle" id="legendToggle">Legend <span id="legendChevron">&#9662;</span></button>
+        <div class="legend" id="legendPanel">
+          <div class="lt">Clusters</div>
+          <div class="lr">
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+              width:15px;height:15px;border-radius:50%;background:rgba(168,122,18,.88);
+              color:#fff;font-family:'IBM Plex Mono',monospace;font-size:7px;flex-shrink:0;">12</span>
+            grouped events, always numbered &mdash; not crowd size
+          </div>
+          <div class="lsep"></div>
+          <div class="lt">Crowd size <span style="font-weight:400;text-transform:none;letter-spacing:0;">(individual events only)</span></div>
           <div class="lr"><span class="ld" style="width:5px;height:5px;"></span>unknown</div>
           <div class="lr"><span class="ld" style="width:8px;height:8px;"></span>10s</div>
           <div class="lr"><span class="ld" style="width:12px;height:12px;"></span>100s</div>
@@ -257,6 +309,7 @@
   </div>
 </div>
 
+<div class="chartTip" id="chartTip"></div>
 <div class="listBg" id="listBg">
   <div class="listPanel">
     <div class="listHead"><h3 id="listTitle">—</h3><div class="sub" id="listSub">—</div></div>
@@ -277,52 +330,35 @@
     disobedience. This dashboard lets you explore that record: where events happened, when, what
     they were about, and how many people took part.</p>
 
-    <h3>Where the records come from</h3>
-    <p>CCC uses a broad and always-evolving set of sources to find public information about
-    relevant events. Day to day, the research proceeds along several channels:</p>
-    <ul>
-      <li>An automated web crawl of online print and broadcast media.</li>
-      <li>Regular review of selected social media accounts &mdash; principally open accounts
-      maintained by organizers, activists and independent journalists &mdash; which surface many
-      events that commercial news media cover incompletely or not at all.</li>
-      <li>Google News searches on relevant keywords, to catch stories the crawler missed.</li>
-      <li>Periodic review of the websites of organizations hosting large, multi-location protests
-      or publishing calendars of past and upcoming events.</li>
-      <li>Public submissions through CCC's
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSc3W_tb71fiEJhi379y0T6gttQ0f9nbb23bj8iicceLP_j8rQ/viewform"
-         target="_blank" rel="noopener" style="color:var(--gold);">online form</a>. A record is
-      only created once the reported event is confirmed to have taken place.</li>
-    </ul>
+    <p>CCC draws on a broad, continually updated set of sources: an automated crawl of print and
+    broadcast media; regular review of social media accounts run by organizers, activists and
+    independent journalists, which often surface events commercial outlets miss entirely; Google
+    News searches to catch what the crawler doesn't; periodic review of organizers' own websites
+    and calendars; and public submissions through CCC's
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSc3W_tb71fiEJhi379y0T6gttQ0f9nbb23bj8iicceLP_j8rQ/viewform"
+       target="_blank" rel="noopener" style="color:var(--gold);">online form</a>, added only once
+    the event is confirmed to have taken place.</p>
 
-    <h3>Using it</h3>
-    <p>The filters on the left all apply at once, and the map, the figures along the top and the
-    charts on the right update together. Drag the two handles under the date range to narrow the
-    period; the grey profile behind them shows how events are distributed over time.</p>
-    <ul>
-      <li>Zoomed out, nearby events are grouped into numbered circles. Click one to zoom in.</li>
-      <li>Circles ringed in teal hold events that all share a single location &mdash; zooming will
-      not separate them, so clicking opens a list of the events instead.</li>
-      <li>Individual events are coloured by political valence and sized by crowd size. Hover any
-      point for its date, size, claim and the sources the record is based on.</li>
-      <li>Puerto Rico, the US Virgin Islands, Guam and American Samoa appear in the panels along
-      the bottom of the map.</li>
-    </ul>
+    <p>Filters apply together, and the map, the figures above it and the charts on the right
+    update as one. Drag the handles under the date range to narrow the period. Numbered
+    circles group nearby events &mdash; click one to zoom in. When the ring around one turns teal,
+    every event inside it shares one exact location (including the territory panels along the
+    bottom), so zooming further won't separate them &mdash; click to open a list instead.
+    Individual points are coloured by political valence and sized by crowd size; hover one for its
+    date, size, claim and sources. The Legend button in the map's top-right corner explains these
+    symbols.</p>
 
     <h3>Reading the numbers</h3>
     <ul>
-      <li><strong>Crowd size is recorded for about 30% of events.</strong> The participant total is
-      a sum over those events only, not an estimate of total turnout, and the events that get a
-      size estimate are not a random sample &mdash; larger and more widely covered gatherings are
-      far more likely to have one. The "events with size estimate" figure shows what share of your
-      current selection the total rests on; when it is low, treat the total as a floor rather than
-      a measure.</li>
-      <li><strong>Events are located to their city or town</strong>, not to a street address, so a
-      point marks the locality where an event took place rather than the exact spot. Many events in
-      the same place therefore share identical coordinates.</li>
-      <li><strong>Absence of events is not evidence of absence.</strong> The record depends on
-      what the sources above surfaced, so thin coverage in a place or period may reflect what was
-      reported rather than what happened. If you know of a missing or mis-recorded event, CCC
-      accepts corrections through the submission form.</li>
+      <li><strong>Crowd size is recorded for about 30% of events</strong>, and not at random &mdash;
+      larger, more widely covered gatherings are far more likely to have an estimate. The
+      participant total sums only those events; the coverage figure beside it shows what share of
+      the current selection it rests on.</li>
+      <li><strong>Events are located to their city or town</strong>, not a street address, so many
+      events in the same place share identical coordinates.</li>
+      <li><strong>Absence of events isn't evidence of absence.</strong> The record depends on what
+      the sources above surfaced. Know of something missing or wrong? CCC accepts corrections
+      through the submission form above.</li>
     </ul>
 
     <h3>Getting the data</h3>
@@ -712,7 +748,14 @@ function spark(){
 }
 
 /* ---------- charts ---------- */
-function tally(sel,rows,fn){
+function weekLabel(k){
+  const start=new Date(DAY0.getTime()+k*7*MS);
+  const end=new Date(start.getTime()+6*MS);
+  const f=d=>d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return f(start)+'\u2013'+f(end)+(start.getFullYear()!==end.getFullYear()
+    ||end.getFullYear()!==new Date().getFullYear() ? ', '+end.getFullYear() : '');
+}
+function tally(sel,rows,fn,unit){
   const el=document.querySelector(sel);el.innerHTML='';
   const w=el.clientWidth,h=74,m={t:5,r:3,b:15,l:34};
   const B=new Map();
@@ -732,7 +775,27 @@ function tally(sel,rows,fn){
         return dt.toLocaleDateString('en-US',{month:'short',year:'2-digit'});}));
   svg.selectAll('rect.b').data(data).enter().append('rect')
     .attr('x',d=>x(d.k)).attr('y',d=>y(d.v)).attr('width',Math.max(x.bandwidth(),1))
-    .attr('height',d=>h-m.b-y(d.v)).attr('fill','#A87A12').attr('opacity',.82);
+    .attr('height',d=>h-m.b-y(d.v)).attr('fill','#A87A12').attr('opacity',.82)
+    .style('cursor','default')
+    .on('mouseenter',function(ev,d){
+      d3.select(this).attr('opacity',1);
+      chartTip.innerHTML='<div class="t">'+weekLabel(d.k)+'</div>'+
+        '<div class="m">'+d.v.toLocaleString()+' '+unit+'</div>';
+      chartTip.style.display='block';
+      positionChartTip(ev);
+    })
+    .on('mousemove',positionChartTip)
+    .on('mouseleave',function(){
+      d3.select(this).attr('opacity',.82);
+      chartTip.style.display='none';
+    });
+}
+function positionChartTip(ev){
+  const pw=chartTip.offsetWidth,ph=chartTip.offsetHeight;
+  let x=ev.clientX+14,y=ev.clientY-ph-10;
+  if(x+pw>window.innerWidth-8) x=ev.clientX-pw-14;
+  if(y<8) y=ev.clientY+16;
+  chartTip.style.left=x+'px'; chartTip.style.top=y+'px';
 }
 function valBar(rows){
   const el=document.getElementById('chVa');el.innerHTML='';
@@ -787,14 +850,52 @@ function render(){
   dFi.value=iso(S.from); dTi.value=iso(S.to);
   draw();
   spark();
-  tally('#chEv',visible,()=>1);
-  tally('#chPa',visible,r=>r.size||0);
+  tally('#chEv',visible,()=>1,'events');
+  tally('#chPa',visible,r=>r.size||0,'participants');
   valBar(visible);
   bars('chSt',[...stC.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8));
   bars('chIs',[...isC.entries()].map(([i,n])=>[ISSUES[i],n]).sort((a,b)=>b[1]-a[1]).slice(0,8));
 }
 /* ---------- stacked-cluster list + About panel ---------- */
 const lb=document.getElementById('listBg');
+const chartTip=document.getElementById('chartTip');
+// ---- mobile filter drawer ----
+const sideEl=document.querySelector('.side');
+const backdrop=document.getElementById('sideBackdrop');
+const openDrawer=()=>{sideEl.classList.add('open');backdrop.classList.add('open');};
+const closeDrawer=()=>{sideEl.classList.remove('open');backdrop.classList.remove('open');};
+document.getElementById('filterToggle').onclick=openDrawer;
+document.getElementById('sideClose').onclick=closeDrawer;
+backdrop.addEventListener('click',closeDrawer);
+// picking a filter closes the drawer so the map is visible again
+sideEl.addEventListener('click',e=>{
+  if(e.target.closest('.chip,.tg,input[type=range],#reset')) closeDrawer();
+});
+
+// iOS/Android address-bar chrome makes 100vh unreliable; measure the real
+// viewport height and keep it current as the browser UI shows/hides.
+function setVH(){
+  document.documentElement.style.setProperty('--vh', (window.innerHeight*0.01)+'px');
+}
+setVH();
+window.addEventListener('resize', setVH);
+window.addEventListener('orientationchange', ()=>setTimeout(setVH,150));
+
+// ---- legend: collapsed by default so it never covers the map ----
+const legendPanel=document.getElementById('legendPanel');
+const legendToggle=document.getElementById('legendToggle');
+legendToggle.onclick=()=>{
+  legendPanel.classList.toggle('open');
+  legendToggle.style.display=legendPanel.classList.contains('open')?'none':'block';
+};
+const legendChevron=document.getElementById('legendChevron');
+// clicking the map itself (not the panel) closes it again
+cv.addEventListener('click',()=>{
+  if(legendPanel.classList.contains('open')){
+    legendPanel.classList.remove('open'); legendToggle.style.display='block';
+  }
+},true);
+
 const mb=document.getElementById('modalBg');
 const MAXLIST=300;
 function openList(g){
