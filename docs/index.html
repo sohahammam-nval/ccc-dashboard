@@ -115,8 +115,9 @@
   .ld{border-radius:50%;background:transparent;border:1.3px solid var(--soft);flex-shrink:0;}
   .lsep{height:1px;background:var(--line);margin:7px 0;}
   .lv{width:9px;height:9px;border-radius:50%;}
-  .hint{position:absolute;bottom:13px;left:13px;font-family:'IBM Plex Mono',monospace;
-    font-size:8.5px;color:var(--soft);letter-spacing:.05em;z-index:5;}
+  .hint{position:absolute;bottom:76px;right:13px;font-family:'IBM Plex Mono',monospace;
+    font-size:8.5px;color:var(--soft);letter-spacing:.05em;z-index:5;text-align:right;
+    max-width:150px;line-height:1.5;}
   .pop{position:absolute;z-index:8;background:var(--card);border:1px solid var(--line);
     border-radius:4px;padding:9px 11px;font-size:12px;pointer-events:none;display:none;
     box-shadow:0 3px 14px rgba(30,42,51,.16);max-width:230px;}
@@ -237,7 +238,7 @@
   <aside class="side">
     <div class="brand"><button class="sideClose" id="sideClose">&times;</button><h1>US Protest Events</h1><div class="s">Crowd Counting Consortium</div>
       <div class="s" id="brandSub">—</div>
-      <button class="aboutBtn" id="aboutBtn">About this dashboard</button></div>
+      <button class="aboutBtn" id="aboutBtn">About the data &amp; dashboard</button></div>
     <div class="g">
       <div class="lab">Choose a date range</div>
       <div class="dates"><input type="date" class="dbox" id="dF"><span class="dsep">to</span><input type="date" class="dbox" id="dT"></div>
@@ -247,7 +248,7 @@
         <div class="sliderhint">drag the handles to change the range</div></div>
     </div>
     <div class="g"><div class="lab">Filter by political issue</div><div class="chips" id="issues"></div>
-      <div class="note" style="margin-top:7px;">OR LOGIC · NONE SELECTED = ALL</div></div>
+      <div class="note" style="margin-top:7px;">Matches any selected issue. Select none to see all.</div></div>
     <div class="g"><div class="lab">Filter by political valence</div><div class="chips" id="valence"></div></div>
     <div class="g"><div class="lab">Filter by event type</div><div class="chips" id="etypes"></div>
       <div class="note" id="typeNote" style="margin-top:7px;">DEMONSTRATION INCLUDES MARCHES, RALLIES AND VIGILS</div></div>
@@ -291,8 +292,8 @@
           <div class="lr"><span class="ld" style="width:22px;height:22px;"></span>10,000s</div>
           <div class="lsep"></div>
           <div class="lt">Valence</div>
-          <div class="lr"><span class="lv" style="background:var(--left)"></span>left wing</div>
-          <div class="lr"><span class="lv" style="background:var(--right)"></span>right wing</div>
+          <div class="lr"><span class="lv" style="background:var(--left)"></span>liberal/left</div>
+          <div class="lr"><span class="lv" style="background:var(--right)"></span>conservative/right</div>
           <div class="lr"><span class="lv" style="background:var(--other)"></span>other</div>
         </div>
         <div class="zoomctl"><button id="zIn">+</button><button id="zOut">−</button></div>
@@ -301,7 +302,7 @@
       <aside class="rail">
         <div class="cb"><div class="ct">Weekly tallies of events</div><div class="cs">filtered</div><div id="chEv"></div></div>
         <div class="cb"><div class="ct">Weekly tallies of participants</div><div class="cs">mid-range estimates</div><div id="chPa"></div></div>
-        <div class="cb"><div class="ct">Valence composition</div><div class="cs">share of filtered events</div><div id="chVa"></div></div>
+        <div class="cb"><div class="ct">Political valence composition</div><div class="cs">share of filtered events</div><div id="chVa"></div></div>
         <div class="cb"><div class="ct">Top issues</div><div class="cs">filtered event count</div><div id="chIs"></div></div>
         <div class="cb" style="border-bottom:none;"><div class="ct">Top states</div><div class="cs">filtered event count</div><div id="chSt"></div></div>
       </aside>
@@ -321,8 +322,8 @@
 <div class="modalBg" id="modalBg">
   <div class="modal">
     <button class="modalClose" id="modalClose">&times;</button>
-    <h2>About this dashboard</h2>
-    <div class="sub">Crowd Counting Consortium &middot; Phase 3 &middot; January 2025 onward</div>
+    <h2>About the data &amp; dashboard</h2>
+    <div class="sub">Crowd Counting Consortium &middot; __SUBTITLE__</div>
 
     <p>The Crowd Counting Consortium (CCC) is a joint project of Harvard Kennedy School and the
     University of Connecticut that collects publicly available data on political protest events
@@ -362,8 +363,7 @@
     </ul>
 
     <h3>Getting the data</h3>
-    <p>The full dataset and its codebook are published openly on Harvard Dataverse, along with the
-    earlier phases covering 2017&ndash;2024, which are not shown here.</p>
+    <p>__DATA_SCOPE_NOTE__</p>
     <p>If you use the data in published work, please cite the Crowd Counting Consortium as the
     source. Each dataset version on Dataverse carries its own DOI &mdash; see the Dataverse page
     for the one matching the version you used.</p>
@@ -373,6 +373,7 @@
        target="_blank" rel="noopener"
        style="color:var(--gold);">Download the data from Harvard Dataverse</a>
        <span style="color:var(--soft);">&mdash; all three phases, with codebooks</span></p>
+    <p style="font-size:12px;color:var(--soft);margin-top:18px;">This dashboard was created with the assistance of Claude, primarily Claude Opus 5.5.</p>
   </div>
 </div>
 
@@ -381,7 +382,7 @@ let DATA=null;
 const PROV="SOURCE: CROWD COUNTING CONSORTIUM, PHASE 3 PUBLIC DATASET.";
 let US_STATES=null;
 const VC=['#4A6E9E','#B85C4A','#8A8578'];
-const VNAME=['left wing','right wing','other'];
+const VNAME=['liberal/left','conservative/right','other'];
 const MS=864e5;
 let ISSUES,TYPES,CLAIMS,LOCS,SRCS,DAY0,D,T0,T1,S;
 let rA,rB,dFi,dTi;                      // assigned in buildControls()
@@ -397,8 +398,8 @@ function initData(){
     t:DAY0.getTime()+r[0]*MS, p:null
   }));
   T0=D[0].t; T1=D[D.length-1].t;
-  S={from:T0,to:T1,issues:new Set(),valence:new Set([0,1,2]),
-     types:new Set(TYPES.map((_,i)=>i)),
+  S={from:T0,to:T1,issues:new Set(),valence:new Set(),
+     types:new Set(),
      arrests:false,damage:false,pInj:false,polInj:false,online:false,claim:''};
   buildControls();
 }
@@ -408,8 +409,8 @@ function lastDate(){
 
 function ok(r){
   if(r.t<S.from||r.t>S.to)return false;
-  if(!S.valence.has(r.val))return false;
-  if(!S.types.has(r.ty))return false;
+  if(S.valence.size&&!S.valence.has(r.val))return false;
+  if(S.types.size&&!S.types.has(r.ty))return false;
   if(S.issues.size){let hit=false;for(const i of r.iss)if(S.issues.has(i)){hit=true;break;}if(!hit)return false;}
   if(S.arrests&&!(r.f&1))return false;
   if(S.damage&&!(r.f&2))return false;
@@ -457,7 +458,14 @@ function resolveInsetMembers(){
     const live=ins.members.filter(m=>present.has(m.code));
     ins.liveMembers=live;
     ins.names=live.map(m=>m.name);
-    ins.label=live.map(m=>m.code).join(' · ');
+    // Single-territory panels (Guam, American Samoa) always get the full
+    // name — there's room. Multi-territory panels (Puerto Rico + Virgin
+    // Islands sharing one box) fall back to codes if the full names don't
+    // actually fit; checked against the real rendered width at draw time,
+    // not guessed from character counts.
+    ins.labelFull=live.map(m=>m.name).join(' \u00b7 ');
+    ins.labelCode=live.map(m=>m.code).join(' \u00b7 ');
+    ins.label=ins.labelCode;   // draw() overwrites this once it knows the panel width
   }
 }
 const INSET_W=104, INSET_H=64, INSET_PAD=9;
@@ -664,7 +672,10 @@ function draw(){
     ctx.font="500 8.5px 'IBM Plex Mono',monospace";
     ctx.textAlign='left';ctx.textBaseline='top';
     ctx.fillStyle='#5B6670';
-    ctx.fillText(ins.label,b.x+5,b.y+4);   // count now sits on the bubble itself
+    const avail=b.w-8;
+    const label=(ins.liveMembers.length<=1 || ctx.measureText(ins.labelFull).width<=avail)
+      ? ins.labelFull : ins.labelCode;
+    ctx.fillText(label,b.x+5,b.y+4);   // count now sits on the bubble itself
     ctx.restore();
   }
 
@@ -837,13 +848,12 @@ document.getElementById('reset').onclick=()=>{
   // mutate the existing Sets: the chip handlers hold references to them,
   // so replacing them would silently detach every chip
   S.issues.clear();
-  S.valence.clear(); [0,1,2].forEach(v=>S.valence.add(v));
-  S.types.clear();   TYPES.forEach((_,i)=>S.types.add(i));
+  S.valence.clear();
+  S.types.clear();
   S.arrests=S.damage=S.pInj=S.polInj=S.online=false;S.claim='';q.value='';
   rA.value=0;rB.value=1000;
   dFi.value=iso(T0);dTi.value=iso(T1);
-  document.querySelectorAll('#issues .chip').forEach(c=>c.classList.remove('on'));
-  document.querySelectorAll('#valence .chip,#etypes .chip').forEach(c=>c.classList.add('on'));
+  document.querySelectorAll('#issues .chip,#valence .chip,#etypes .chip').forEach(c=>c.classList.remove('on'));
   document.querySelectorAll('.tg').forEach(t=>t.classList.remove('on'));
   render();};
 }
@@ -895,6 +905,7 @@ function tally(sel,rows,fn,unit){
       .tickFormat(k=>{const dt=new Date(DAY0.getTime()+k*7*MS);
         return dt.toLocaleDateString('en-US',{month:'short',year:'2-digit'});}));
   svg.selectAll('rect.b').data(data).enter().append('rect')
+    .attr('class','b')
     .attr('x',d=>x(d.k)).attr('y',d=>y(d.v)).attr('width',Math.max(x.bandwidth(),1))
     .attr('height',d=>h-m.b-y(d.v)).attr('fill','#A87A12').attr('opacity',.82)
     .style('cursor','default')
@@ -909,13 +920,25 @@ function tally(sel,rows,fn,unit){
     .on('mouseleave',function(){
       d3.select(this).attr('opacity',.82);
       chartTip.style.display='none';
+    })
+    // Touch has no hover state, so a tap shows the same tooltip a mouseenter
+    // would. No preventDefault here — the chart sits inside a scrollable
+    // rail on mobile, and blocking the default touch behaviour would block
+    // that scroll too.
+    .on('touchstart',function(ev,d){
+      d3.select(this).attr('opacity',1);
+      chartTip.innerHTML='<div class="t">'+weekLabel(d.k)+'</div>'+
+        '<div class="m">'+d.v.toLocaleString()+' '+unit+'</div>';
+      chartTip.style.display='block';
+      positionChartTip(ev);
     });
 }
 function positionChartTip(ev){
+  const pt=ev.touches&&ev.touches[0]?ev.touches[0]:ev;
   const pw=chartTip.offsetWidth,ph=chartTip.offsetHeight;
-  let x=ev.clientX+14,y=ev.clientY-ph-10;
-  if(x+pw>window.innerWidth-8) x=ev.clientX-pw-14;
-  if(y<8) y=ev.clientY+16;
+  let x=pt.clientX+14,y=pt.clientY-ph-10;
+  if(x+pw>window.innerWidth-8) x=pt.clientX-pw-14;
+  if(y<8) y=pt.clientY+16;
   chartTip.style.left=x+'px'; chartTip.style.top=y+'px';
 }
 function valBar(rows){
@@ -980,6 +1003,9 @@ function render(){
 /* ---------- stacked-cluster list + About panel ---------- */
 const lb=document.getElementById('listBg');
 const chartTip=document.getElementById('chartTip');
+document.addEventListener('touchstart',e=>{
+  if(!e.target.closest('rect.b')) chartTip.style.display='none';
+},{passive:true});
 // ---- mobile filter drawer ----
 const sideEl=document.querySelector('.side');
 const backdrop=document.getElementById('sideBackdrop');
